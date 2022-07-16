@@ -4,9 +4,9 @@ const Router = express.Router()
 const db = require("../model");
 const Product = db.product;
 const Coupon = db.coupon;
-const { Op } = require("sequelize");
+const auth = require('../middleware/auth')
 
-Router.get('/api/v1.0/product/cart', async (req, res) =>{
+Router.get('/api/v1.0/product/cart', auth, async (req, res) =>{
     let cartItem = []
     let totalCartPrice = 0
     const product = Product.findAll()
@@ -30,7 +30,7 @@ Router.get('/api/v1.0/product/cart', async (req, res) =>{
         });
     });
 })
-Router.post('/api/v1.0/product/coupon', async (req, res) =>{
+Router.post('/api/v1.0/product/coupon', auth, async (req, res) =>{
   const {couponCode,items,totalCartPrice} = req.body
   let discountType;
   let couponType;
