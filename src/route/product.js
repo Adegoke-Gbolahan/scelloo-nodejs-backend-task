@@ -7,11 +7,11 @@ const Coupon = db.coupon;
 const auth = require('../middleware/auth')
 
 Router.get('/api/v1.0/product/cart', auth, async (req, res) =>{
-    let cartItem = []
+    try {
+      let cartItem = []
     let totalCartPrice = 0
-    const product = Product.findAll()
-    .then(data => {
-        data.map((item, idx, arr)=>{
+    const product =  await Product.findAll();
+    product.map((item, idx, arr)=>{
             let randomCartQuantity = Math.floor(Math.random() * (5 - 1 + 1) + 1)
             totalCartPrice += (item.productPrice * randomCartQuantity)
             cartItem.push({
@@ -21,15 +21,54 @@ Router.get('/api/v1.0/product/cart', auth, async (req, res) =>{
               productQuantity:randomCartQuantity
             })   
         })
-        res.send({items:cartItem,totalCartPrice});          
-      })
-      .catch(err => {
-        res.status(500).send({
+        res.send({items:cartItem,totalCartPrice}); 
+    } catch (error) {
+      res.status(500).send({
           message:
             err.message || "Some error occurred while creating the User."
         });
-    });
+    }
+ 
 })
+Router.get('/api/v1.0/product/all', auth, async (req, res) => {
+try {
+    const product = await Product.findAll();
+    return res.status(200).send({success:false, product})
+} catch (error) {
+  return res.status(500).send({success:false, message:error.message})
+}
+})
+Router.patch('/api/v1.0/product/:id', auth, async (req, res) => {
+  try {
+      const checkProduct = await Product.findOne({where:{id:req.params.id}})
+      if(!checkProduct) return res.status(400).send({success:false, message:"Product not found"})
+      await Product.update({...req.body},{where:{id:req.params.id}});
+      const product = await Product.findOne({where:{id:req.params.id}})
+      return res.status(200).send({success:false, product})
+  } catch (error) {
+    return res.status(500).send({success:false, message:error.message})
+  }
+  })
+  Router.get('/api/v1.0/product/:id', auth, async (req, res) => {
+    try {
+        const product = await Product.findOne({where:{id:req.params.id}})
+        if(!product) return res.status(400).send({success:false, message:"Product not found"})
+
+        return res.status(200).send({success:false, product})
+    } catch (error) {
+      return res.status(500).send({success:false, message:error.message})
+    }
+    })
+Router.delete('/api/v1.0/product/:id', auth, async (req, res) => {
+      try {
+          const product = await Product.findOne({where:{id:req.params.id}})
+          if(!product) return res.status(400).send({success:false, message:"Product not found"})
+          await Product.destroy({where:{id:req.params.id}})
+          return res.status(200).send({success:false, message:"Product Deleted!"})
+      } catch (error) {
+        return res.status(500).send({success:false, message:error.message})
+      }
+      })
 Router.post('/api/v1.0/product/coupon', auth, async (req, res) =>{
   const {couponCode,items,totalCartPrice} = req.body
   let discountType;
